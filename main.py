@@ -29,7 +29,7 @@ def get_single_product_infos(url):
 
 def addtocsv(product_infos):
     #creating the csv file and adding the headers
-    headers = ["Titre", "Type de Livre", "UPC", "Prix HT","Prix TTC", "Stock", "Description"] #creating the headers of the csv file
+    headers = list(product_infos.keys()) #creating the headers of the csv file
     with open("data.csv", "w", newline="") as file:
       csv_file = csv.writer(file, delimiter =",")
       csv_file.writerow(headers)
