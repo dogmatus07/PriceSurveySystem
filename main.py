@@ -27,27 +27,32 @@ def get_single_product_infos(url):
     desc = iddesc.find_next_sibling('p').get_text()
     return {"title": title.text.strip(), "product_type": product_type.text.strip(), "upc": upc.text.strip(), "price_excluding_tax": price_excluding_tax.text.strip(), "price_including_tax": price_including_tax.text.strip(), "stock": stock.strip(), "description": desc}
 
-url = "https://books.toscrape.com/catalogue/tipping-the-velvet_999/index.html"
+def addtocsv(product_infos):
+    #creating the csv file and adding the headers
+    headers = ["Titre", "Type de Livre", "UPC", "Prix HT","Prix TTC", "Stock", "Description"] #creating the headers of the csv file
+    with open("data.csv", "w", newline="") as file:
+      csv_file = csv.writer(file, delimiter =",")
+      csv_file.writerow(headers)
+
+    #adding the informations inside the list into the csv file
+    with open("data.csv", "a", newline = "") as file: #a means append here to add the informations
+      csv_writer = csv.writer(file, delimiter =",")
+      csv_writer.writerow([
+        product_infos["title"],
+        product_infos["product_type"],
+        product_infos["upc"],
+        product_infos["price_excluding_tax"],
+        product_infos["price_including_tax"],
+        product_infos["stock"],
+        product_infos["description"]
+      ])
+
+    #display the content of the csv file
+    with open("data.csv", "r") as file :
+      csv_reader = csv.reader(file, delimiter =",")
+      for row in csv_reader:
+        print(row)
+
+url = "https://books.toscrape.com/catalogue/forever-and-forever-the-courtship-of-henry-longfellow-and-fanny-appleton_894/index.html"
 product_infos = get_single_product_infos(url)
-for key, value in product_infos.items():
-    print(f"{key} : {value}")
-
-'''#creating the csv file and adding the headers
-headers = ["Titre", "Type de Livre", "UPC", "Prix HT","Prix TTC", "Stock", "Description"] #creating the headers of the csv file
-with open("data.csv", "w", newline="") as file:
-  csv_file = csv.writer(file, delimiter =",")
-  csv_file.writerow(headers)
-
-#specifying the list containing all the informations about the product
-product_data = [title.text.strip(), product_type.text.strip(), upc.text.strip(), price_excluding_tax.text.strip(), price_including_tax.text.strip(), stock.text.strip(), desc.text.strip()]
-
-#adding the informations inside the list into the csv file
-with open("data.csv", "a", newline = "") as file: #a means append here to add the informations
-  csv_writer = csv.writer(file, delimiter =",")
-  csv_writer.writerow(product_data)
-
-#display the content of the csv file
-with open("data.csv", "r") as file : #r means read as we want to read and display what's inside the csv file
-  csv_reader = csv.reader(file, delimiter =",")
-  for row in csv_reader:
-    print(row)'''
+addtocsv(product_infos)
