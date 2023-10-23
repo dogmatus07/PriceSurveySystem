@@ -53,6 +53,28 @@ def addtocsv(product_infos):
       for row in csv_reader:
         print(row)
 
-url = "https://books.toscrape.com/catalogue/forever-and-forever-the-courtship-of-henry-longfellow-and-fanny-appleton_894/index.html"
-product_infos = get_single_product_infos(url)
-addtocsv(product_infos)
+def getcategory_infos(caturl):
+    #getting the html data and parsing it
+    catlink = caturl
+    catpage = requests.get(catlink)
+    soup = BeautifulSoup(catpage.content, 'html.parser')
+
+    # getting all the links inside a category
+    product_section = soup.find_all("article", class_="product_pod")
+    product_urls = []  # put the results inside list
+    for product in product_section:
+        h3 = product.find('h3')  # the url is inside a h3 tag
+        if h3:
+            product_url = h3.find('a')['href']  # get the href
+            raw_url = catlink.rsplit("/", 4)[0] + "/"  # divide the original link and split with delimiter /, getting the 1st element before the last /
+            full_url = raw_url + product_url
+            full_url = full_url.replace("../../../", "") #deleting the unwanted /..
+            product_urls.append(full_url) #adding the results inside the original list
+    print(product_urls)
+
+#url = "https://books.toscrape.com/catalogue/forever-and-forever-the-courtship-of-henry-longfellow-and-fanny-appleton_894/index.html"
+#product_infos = get_single_product_infos(url)
+#addtocsv(product_infos)
+
+caturl = "https://books.toscrape.com/catalogue/category/books/mystery_3/index.html"
+getcategory_infos(caturl)
