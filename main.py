@@ -70,11 +70,11 @@ def getcategory_infos(caturl):
             full_url = raw_url + product_url
             full_url = full_url.replace("../../../", "") #deleting the unwanted /..
             product_urls.append(full_url) #adding the results inside the original list
-    print(product_urls)
+    return product_urls
 
 #url = "https://books.toscrape.com/catalogue/forever-and-forever-the-courtship-of-henry-longfellow-and-fanny-appleton_894/index.html"
 #product_infos = get_single_product_infos(url)
 #addtocsv(product_infos)
 
 caturl = "https://books.toscrape.com/catalogue/category/books/mystery_3/index.html"
-getcategory_infos(caturl)
+print(getcategory_infos(caturl))
