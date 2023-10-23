@@ -1,8 +1,3 @@
-#importing all necessary packages
-import requests
-from bs4 import BeautifulSoup
-import csv
-
 def get_single_product_infos(url):
     #getting the html data and parsing it
     link = url
