@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-
+import csv
 def get_single_product_infos(url):
     #getting the html data and parsing it
     page = requests.get(url)
@@ -26,13 +26,15 @@ def get_single_product_infos(url):
     desc = desc_element.get_text() if desc_element else ''
     return {"title": title.text.strip(), "product_type": product_type.text.strip(), "upc": upc.text.strip(), "price_excluding_tax": price_excluding_tax.text.strip(), "price_including_tax": price_including_tax.text.strip(), "stock": stock.strip(), "description": desc}
 
-def addtocsv(product_infos):
-    #creating the csv file and adding the headers
-    headers = list(product_infos.keys()) #creating the headers of the csv file
+'''
+def addcsvheaders(product_infos) :
+    # adding the csv headers
+    headers = list(product_infos.keys())  # creating the headers of the csv file
     with open("data.csv", "w", newline="") as file:
-      csv_file = csv.writer(file, delimiter =",")
-      csv_file.writerow(headers)
-
+        csv_file = csv.writer(file, delimiter=",")
+        csv_file.writerow(headers)
+'''
+def addtocsv(product_infos):
     #adding the informations inside the list into the csv file
     with open("data.csv", "a", newline = "") as file: #a means append here to add the informations
       csv_writer = csv.writer(file, delimiter =",")
@@ -67,6 +69,7 @@ def getcategory_infos(caturl): #get all urls from a category page
             full_url = urljoin(caturl, product_url) # get the full url of the product
             product_urls.append(full_url) #adding the results inside the original list
     return product_urls
+
 def next_status(caturl): #testing if there's a next page
     cat_infos = []
     while True: # iterate as long as these are true
@@ -81,9 +84,10 @@ def next_status(caturl): #testing if there's a next page
             break #if no next button exist, get out of the loop
     return cat_infos
 
+# main function
 caturl = "https://books.toscrape.com/catalogue/category/books/mystery_3/index.html"
 product_urls = next_status(caturl)
 for url in product_urls:
     product_info = get_single_product_infos(url)
-    print(product_info)
+    addtocsv(product_info)
 
