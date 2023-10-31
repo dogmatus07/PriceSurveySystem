@@ -2,12 +2,13 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import csv
+
 def get_single_product_infos(url):
-    #getting the html data and parsing it
+    # getting the html data and parsing it
     page = requests.get(url)
     soup = BeautifulSoup(page.content, 'html.parser')
 
-    #gathering the informations and put them inside variables
+    # gathering the informations and put them inside variables
     table = soup.find('table', class_="table table-striped")
     upc = table.find_all('td')[0]
     product_type = table.find_all('td')[1]
@@ -84,7 +85,7 @@ def next_status(caturl): #testing if there's a next page
             break #if no next button exist, get out of the loop
     return cat_infos
 
-# main function
+# main code
 caturl = "https://books.toscrape.com/catalogue/category/books/mystery_3/index.html"
 product_urls = next_status(caturl)
 for url in product_urls:
