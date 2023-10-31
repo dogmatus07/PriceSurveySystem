@@ -25,7 +25,10 @@ def get_single_product_infos(url):
     iddesc = soup.find('div', id="product_description")
     desc_element = iddesc.find_next('p')
     desc = desc_element.get_text() if desc_element else ''
-    return {"title": title.text.strip(), "product_type": product_type.text.strip(), "upc": upc.text.strip(), "price_excluding_tax": price_excluding_tax.text.strip(), "price_including_tax": price_including_tax.text.strip(), "stock": stock.strip(), "description": desc}
+    im = soup.find('div', class_='item active')
+    image_url = im.find('img')['src']
+    full_img_url = urljoin(url, image_url)
+    return {"product_page_url" : url, "upc": upc.text.strip(), "title": title.text.strip(), "price_including_tax": price_including_tax.text.strip(), "price_excluding_tax": price_excluding_tax.text.strip(), "number_available" : number_available.text.strip(), "product_description": desc, "category" : category, "review_rating" : review_rating.text.strip(), "image_url" : full_img_url}
 
 '''
 def addcsvheaders(product_infos) :
@@ -40,13 +43,16 @@ def addtocsv(product_infos):
     with open("data.csv", "a", newline = "") as file: #a means append here to add the informations
       csv_writer = csv.writer(file, delimiter =",")
       csv_writer.writerow([
-        product_infos["title"],
-        product_infos["product_type"],
+        product_infos["product_page_url"],
         product_infos["upc"],
-        product_infos["price_excluding_tax"],
+        product_infos["title"],
         product_infos["price_including_tax"],
-        product_infos["stock"],
-        product_infos["description"]
+        product_infos["price_excluding_tax"],
+        product_infos["number_available"],
+        product_infos["product_description"],
+        product_infos["category"],
+        product_infos["review_rating"],
+        product_infos["image_url"],
       ])
 
     #display the content of the csv file
