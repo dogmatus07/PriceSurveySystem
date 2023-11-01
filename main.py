@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import csv
+import os
 
 def get_single_product_infos(url):
     # getting the html data and parsing it
@@ -29,6 +30,19 @@ def get_single_product_infos(url):
     image_url = im.find('img')['src']
     full_img_url = urljoin(url, image_url)
     return {"product_page_url" : url, "upc": upc.text.strip(), "title": title.text.strip(), "price_including_tax": price_including_tax.text.strip(), "price_excluding_tax": price_excluding_tax.text.strip(), "number_available" : number_available.text.strip(), "product_description": desc, "category" : category, "review_rating" : review_rating.text.strip(), "image_url" : full_img_url}
+
+def imgdown(url) :
+    page = requests.get(url)
+    soup = BeautifulSoup(page.content, 'html.parser')
+
+    im = soup.find('div', class_='item active')
+    image_url = im.find('img')['src']
+    image_link = urljoin(url, image_url)
+    name = im.find('img')['alt'].replace(' ', '-').replace('(', '').replace('#', '').replace(')', '')
+    with open(name + '.jpg', 'wb') as file:
+        image = requests.get(image_link)
+        file.write(image.content)
+    return name, image_link
 
 '''
 def addcsvheaders(product_infos) :
@@ -91,10 +105,24 @@ def next_status(caturl): #testing if there's a next page
             break #if no next button exist, get out of the loop
     return cat_infos
 
-# main code
-caturl = "https://books.toscrape.com/catalogue/category/books/mystery_3/index.html"
-product_urls = next_status(caturl)
-for url in product_urls:
-    product_info = get_single_product_infos(url)
-    addtocsv(product_info)
+def scrap_category(caturl) :
+    product_urls = next_status(caturl)
+    for url in product_urls:
+        product_info = get_single_product_infos(url)
+        addtocsv(product_info)
+    return product_info
+'''
+page = "https://books.toscrape.com/"
+r = requests.get(page)
+soup = BeautifulSoup(r.content, 'html.parser')
+cat = soup.find('ul', class_='nav nav-list')
+li_items = cat.find_all('li')[2:] #avoid to get the Books url which is a page for all books
 
+for li in li_items:
+    atags = li.find_all('a')
+    for a in atags:
+        href = a.get('href')
+        caturls = urljoin(page, href)
+'''
+caturl = 'https://books.toscrape.com/catalogue/category/books/travel_2/index.html'
+scrap_category(caturl)
