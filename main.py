@@ -105,10 +105,24 @@ def next_status(caturl): #testing if there's a next page
             break #if no next button exist, get out of the loop
     return cat_infos
 
-# main code
-caturl = "https://books.toscrape.com/catalogue/category/books/mystery_3/index.html"
-product_urls = next_status(caturl)
-for url in product_urls:
-    product_info = get_single_product_infos(url)
-    addtocsv(product_info)
+def scrap_category(caturl) :
+    product_urls = next_status(caturl)
+    for url in product_urls:
+        product_info = get_single_product_infos(url)
+        addtocsv(product_info)
+    return product_info
+'''
+page = "https://books.toscrape.com/"
+r = requests.get(page)
+soup = BeautifulSoup(r.content, 'html.parser')
+cat = soup.find('ul', class_='nav nav-list')
+li_items = cat.find_all('li')[2:] #avoid to get the Books url which is a page for all books
 
+for li in li_items:
+    atags = li.find_all('a')
+    for a in atags:
+        href = a.get('href')
+        caturls = urljoin(page, href)
+'''
+caturl = 'https://books.toscrape.com/catalogue/category/books/travel_2/index.html'
+scrap_category(caturl)
