@@ -6,7 +6,7 @@ import os
 
 
 def get_single_product_infos(url):
-    print("Get single product informations in progress")
+    print("Getting single product informations")
     # getting the html data and parsing it
     try:
         page = requests.get(url, timeout=10)
@@ -34,7 +34,7 @@ def get_single_product_infos(url):
         "review_rating": table.find_all('td')[6],
         "full_img_url": urljoin(url, image_url)
     }
-    print("Get single product informations done")
+    print("Getting single product informations - Success")
     return results
 
 
@@ -50,7 +50,7 @@ def imgdown(url):
     with open(name + '.jpg', 'wb') as f:
         image = requests.get(image_link)
         f.write(image.content)
-    print("Downloading images done")
+    print("Downloading images success")
     return name, image_link
 
 
@@ -63,15 +63,19 @@ def add_csv_headers(product_infos):
 
 
 def add_to_csv(product_infos):
-    print("Add informations to CSV")
+    print("Adding informations to a CSV file")
     # adding the informations inside the list into the csv file
     # writing the headers of the csv file
     # testing first if the file already exist or not
+
     csv_exist = os.path.exists("data.csv")
     if not csv_exist:
         # write the headers
+        print("Writing the CSV headers")
         add_csv_headers(product_infos)
+        print("CSV headers : success")
 
+    print("Adding the product informations into the CSV file")
     with open("data.csv", "a", newline="") as file:  # a means append here to add the informations
         csv_writer = csv.writer(file, delimiter=",")
         csv_writer.writerow([
@@ -86,17 +90,19 @@ def add_to_csv(product_infos):
             product_infos["review_rating"],
             product_infos["full_img_url"],
         ])
+    print("Product informations added to the CSV file")
 
     # display the content of the csv file
+    print("Overview of the content of CSV file")
     with open("data.csv", "r") as file:
         csv_reader = csv.reader(file, delimiter=",")
         for row in csv_reader:
             print(row)
-    print("Add informations to CSV done")
+    print("Adding informations to CSV : success")
 
 
 def get_category_infos(caturl):  # get all urls from a category page
-    print("Get all product URLS from category page")
+    print("Getting all product URLS from category page")
     # getting the html data and parsing it
     catpage = requests.get(caturl)
     soup = BeautifulSoup(catpage.content, 'html.parser')
@@ -110,7 +116,7 @@ def get_category_infos(caturl):  # get all urls from a category page
             product_url = h3.find('a')['href']  # get the href
             full_url = urljoin(caturl, product_url)  # get the full url of the product
             product_urls.append(full_url)  # adding the results inside the original list
-    print("Get all product URLS from category page done")
+    print("Getting all product URLS from category page : success")
     return product_urls
 
 
@@ -134,15 +140,17 @@ def next_status(caturl):  # testing if there's a next page
 
 
 def scrap_category(caturl):
+    print("Getting all informations from category URL")
     product_urls = next_status(caturl)
     for url in product_urls:
         product_info = get_single_product_infos(url)
         add_to_csv(product_info)
+    print("Getting all informations from category URL : Success")
     return product_info
 
 
 def scrap_main(page):
-    print("Find all category urls on the homepage")
+    print("Finding all category urls on the homepage")
     r = requests.get(page)
     soup = BeautifulSoup(r.content, 'html.parser')
     cat = soup.find('ul', class_='nav nav-list')
@@ -154,6 +162,7 @@ def scrap_main(page):
             href = a.get('href')
             caturls = urljoin(page, href)
             category_urls.append(caturls)
+    print("Finding all category urls on the homepage : success")
     return category_urls
 
 
