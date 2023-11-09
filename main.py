@@ -24,14 +24,14 @@ def get_single_product_infos(url):
     image_url = im.find('img')['src']
     results = {
         "product_page_url": url,
-        "upc": table.find_all('td')[0],
-        "title": soup.find('h1', class_=''),
-        "price_including_tax": table.find_all('td')[3],
-        "price_excluding_tax": table.find_all('td')[2],
-        "number_available": table.find_all('td')[5],
+        "upc": table.find_all('td')[0].get_text(),
+        "title": soup.find('h1', class_='').get_text(),
+        "price_including_tax": table.find_all('td')[3].get_text(),
+        "price_excluding_tax": table.find_all('td')[2].get_text(),
+        "number_available": table.find_all('td')[5].get_text(),
         "product_description": desc_element.get_text() if desc_element else '',
         "category": category_book.get_text(strip=True),
-        "review_rating": table.find_all('td')[6],
+        "review_rating": table.find_all('td')[6].get_text(),
         "full_img_url": urljoin(url, image_url)
     }
     print("Getting single product informations - Success")
@@ -66,30 +66,24 @@ def add_to_csv(product_infos):
     print("Adding informations to a CSV file")
     # adding the informations inside the list into the csv file
     # writing the headers of the csv file
-    # testing first if the file already exist or not
-
-    csv_exist = os.path.exists("data.csv")
-    if not csv_exist:
-        # write the headers
-        print("Writing the CSV headers")
-        add_csv_headers(product_infos)
-        print("CSV headers : success")
-
     print("Adding the product informations into the CSV file")
+
+    data = [
+        product_infos["product_page_url"],
+        product_infos["upc"],
+        product_infos["title"],
+        product_infos["price_including_tax"],
+        product_infos["price_excluding_tax"],
+        product_infos["number_available"],
+        product_infos["product_description"],
+        product_infos["category"],
+        product_infos["review_rating"],
+        product_infos["full_img_url"],
+    ]
+
     with open("data.csv", "a", newline="") as file:  # a means append here to add the informations
         csv_writer = csv.writer(file, delimiter=",")
-        csv_writer.writerow([
-            product_infos["product_page_url"],
-            product_infos["upc"],
-            product_infos["title"],
-            product_infos["price_including_tax"],
-            product_infos["price_excluding_tax"],
-            product_infos["number_available"],
-            product_infos["product_description"],
-            product_infos["category"],
-            product_infos["review_rating"],
-            product_infos["full_img_url"],
-        ])
+        csv_writer.writerow(data)
     print("Product informations added to the CSV file")
 
     # display the content of the csv file
@@ -139,11 +133,18 @@ def next_status(caturl):  # testing if there's a next page
     return cat_infos
 
 
-def scrap_category(caturl):
+def scrap_category(cat_url):
     print("Getting all informations from category URL")
-    product_urls = next_status(caturl)
+    product_urls = next_status(cat_url)
+    product_info = {}
+
+    # getting the csv headers
+    one_product = get_single_product_infos(product_urls[0]) # get the infos from 1 product to get the keys
+    add_csv_headers(one_product) # write the keys as headers
+
     for url in product_urls:
-        product_info = get_single_product_infos(url)
+        infos = get_single_product_infos(url)
+        product_info.update(infos)
         add_to_csv(product_info)
     print("Getting all informations from category URL : Success")
     return product_info
@@ -165,12 +166,13 @@ def scrap_main(page):
     print("Finding all category urls on the homepage : success")
     return category_urls
 
-
 # main code
 page = "https://books.toscrape.com/"
 caturl = scrap_main(page)
 for link in caturl:
     scrap_category(link)
 
+#url ="https://books.toscrape.com/catalogue/its-only-the-himalayas_981/index.html"
+#get_single_product_infos(url)
 # caturl = "https://books.toscrape.com/catalogue/category/books/travel_2/index.html"
 # scrap_category(caturl)
