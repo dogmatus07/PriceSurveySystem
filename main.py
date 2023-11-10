@@ -5,68 +5,69 @@ import csv
 import os
 
 
-def get_single_product_infos(url):
-    print("Getting single product informations")
+def get_single_product_infos(book_url):
+    print("Récupération des informations pour le livre : ", book_url)
     # getting the html data and parsing it
+    page_to_scrap = ""
     try:
-        page = requests.get(url, timeout=10)
+        page_to_scrap = requests.get(book_url, timeout=20)
     except requests.exceptions.Timeout:
-        print("Requête expirée")
-    soup = BeautifulSoup(page.content, 'html.parser')
+        print("Requête expirée, erreur Timeout")
 
-    # gathering the informations and put them inside variables
-    table = soup.find('table', class_="table table-striped")
-    category_page = soup.find('ul', class_="breadcrumb")
-    category_book = category_page.find_all('li')[2]
-    iddesc = soup.find('div', id="product_description")
-    desc_element = iddesc.find_next('p')
-    im = soup.find('div', class_='item active')
-    image_url = im.find('img')['src']
-    results = {
-        "product_page_url": url,
-        "upc": table.find_all('td')[0].get_text(),
-        "title": soup.find('h1', class_='').get_text(),
-        "price_including_tax": table.find_all('td')[3].get_text(),
-        "price_excluding_tax": table.find_all('td')[2].get_text(),
-        "number_available": table.find_all('td')[5].get_text(),
-        "product_description": desc_element.get_text() if desc_element else '',
-        "category": category_book.get_text(strip=True),
-        "review_rating": table.find_all('td')[6].get_text(),
-        "full_img_url": urljoin(url, image_url)
-    }
-    print("Getting single product informations - Success")
+    results = {}
+
+    if page_to_scrap:
+        soup = BeautifulSoup(page_to_scrap.content, 'html.parser')
+
+        # gathering the data and put them inside variables
+        table = soup.find('table', class_="table table-striped")
+        category_page = soup.find('ul', class_="breadcrumb")
+        category_book = category_page.find_all('li')[2]
+        id_description = soup.find('div', id="product_description")
+        description = id_description.find_next('p').get_text() if id_description and id_description.find_next(
+            'p') else ''
+        image_class = soup.find('div', class_='item active')
+        image_url = image_class.find('img')['src']
+        results = {
+            "product_page_url": book_url,
+            "upc": table.find_all('td')[0].get_text(),
+            "title": soup.find('h1', class_='').get_text(),
+            "price_including_tax": table.find_all('td')[3].get_text(),
+            "price_excluding_tax": table.find_all('td')[2].get_text(),
+            "number_available": table.find_all('td')[5].get_text(),
+            "product_description": description,
+            "category": category_book.get_text(strip=True),
+            "review_rating": table.find_all('td')[6].get_text(),
+            "full_img_url": urljoin(book_url, image_url)
+        }
+        print("Terminé avec succès")
+    else:
+        print("Requête annulée, car expirée (timeout)")
     return results
 
 
-def imgdown(url):
-    print("Downloading images")
-    page = requests.get(url)
-    soup = BeautifulSoup(page.content, 'html.parser')
-
-    im = soup.find('div', class_='item active')
-    image_url = im.find('img')['src']
-    image_link = urljoin(url, image_url)
-    name = im.find('img')['alt'].replace(' ', '-').replace('(', '').replace('#', '').replace(')', '')
-    with open(name + '.jpg', 'wb') as f:
-        image = requests.get(image_link)
-        f.write(image.content)
-    print("Downloading images success")
-    return name, image_link
-
-
-def add_csv_headers(product_infos):
+def add_csv_headers():
     # adding the csv headers
-    headers = list(product_infos.keys())  # creating the headers of the csv file
-    with open("data.csv", "w", newline="") as file:
+    headers = [
+        "product_page_url",
+        "upc",
+        "title",
+        "price_including_tax",
+        "price_excluding_tax",
+        "number_available",
+        "product_description",
+        "category",
+        "review_rating",
+        "full_img_url",
+    ]
+    with open("data.csv", "w", newline="", encoding='utf-8-sig') as file:
         csv_file = csv.writer(file, delimiter=",")
         csv_file.writerow(headers)
 
 
 def add_to_csv(product_infos):
-    print("Adding informations to a CSV file")
-    # adding the informations inside the list into the csv file
-    # writing the headers of the csv file
-    print("Adding the product informations into the CSV file")
+    # adding the data inside the list into the csv file
+    print("Ajout des informations du livre dans le fichier CSV")
 
     data = [
         product_infos["product_page_url"],
@@ -81,24 +82,25 @@ def add_to_csv(product_infos):
         product_infos["full_img_url"],
     ]
 
-    with open("data.csv", "a", newline="") as file:  # a means append here to add the informations
+    with open("data.csv", "a", newline="", encoding='utf-8-sig') as file:  # a means append here to add the datas
         csv_writer = csv.writer(file, delimiter=",")
         csv_writer.writerow(data)
-    print("Product informations added to the CSV file")
 
+    print("Informations ajoutées avec succès")
+    '''
     # display the content of the csv file
-    print("Overview of the content of CSV file")
+    print("Aperçu du fichier CSV")
     with open("data.csv", "r") as file:
         csv_reader = csv.reader(file, delimiter=",")
         for row in csv_reader:
             print(row)
-    print("Adding informations to CSV : success")
+    print("Fichier CSV mis à jour")
+    '''
 
 
-def get_category_infos(caturl):  # get all urls from a category page
-    print("Getting all product URLS from category page")
+def get_category_infos(cat_url):  # get all urls from a category page
     # getting the html data and parsing it
-    catpage = requests.get(caturl)
+    catpage = requests.get(cat_url)
     soup = BeautifulSoup(catpage.content, 'html.parser')
 
     # getting all the links inside a category
@@ -108,50 +110,46 @@ def get_category_infos(caturl):  # get all urls from a category page
         h3 = product.find('h3')  # the url is inside a h3 tag
         if h3:
             product_url = h3.find('a')['href']  # get the href
-            full_url = urljoin(caturl, product_url)  # get the full url of the product
+            full_url = urljoin(cat_url, product_url)  # get the full url of the product
             product_urls.append(full_url)  # adding the results inside the original list
-    print("Getting all product URLS from category page : success")
     return product_urls
 
 
-def next_status(caturl):  # testing if there's a next page
-    print("Test if there's a next page")
+def next_status(cat_url):  # testing if there's a next page
+    print("Recherche d'une page Next")
     cat_infos = []
     while True:  # iterate as long as these are true
-        response = requests.get(caturl)
+        response = requests.get(cat_url)
         next_content = BeautifulSoup(response.content, 'html.parser')
         cat_infos.extend(
-            get_category_infos(caturl))  # adding the results obtained through the function inside a new list
-        get_next = next_content.select_one("li.next>a")  # testing if there's a next button
-        if get_next:  # if there's a next button
-            print("Next page found")
-            next_url = get_next.get('href')  # get its relative url
-            caturl = urljoin(caturl, next_url)  # get the full url and update the original caturl object
+            get_category_infos(cat_url))  # adding the results obtained through the function inside a new list
+        next_exists = next_content.select_one("li.next>a")  # testing if there's a next button
+        if next_exists:  # if there's a next button
+            print("Page Next trouvée, recherche de plus d'informations...")
+            next_url = next_exists.get('href')  # get its relative url
+            cat_url = urljoin(cat_url, next_url)  # get the full url and update the original caturl object
         else:
-            print("No next page")
+            print("Pas de page Next")
             break  # if no next button exist, get out of the loop
     return cat_infos
 
 
 def scrap_category(cat_url):
-    print("Getting all informations from category URL")
+    print("Récupération des URLs des livres de cette catégorie :", cat_url)
     product_urls = next_status(cat_url)
-    product_info = {}
+    all_product_infos = []
 
-    # getting the csv headers
-    one_product = get_single_product_infos(product_urls[0]) # get the infos from 1 product to get the keys
-    add_csv_headers(one_product) # write the keys as headers
+    for product_url in product_urls:
+        infos = get_single_product_infos(product_url)
+        add_to_csv(infos)
+        all_product_infos.append(infos)
 
-    for url in product_urls:
-        infos = get_single_product_infos(url)
-        product_info.update(infos)
-        add_to_csv(product_info)
-    print("Getting all informations from category URL : Success")
-    return product_info
+    print("Terminé")
+    return all_product_infos
 
 
 def scrap_main(page):
-    print("Finding all category urls on the homepage")
+    print("Récupération des URLs de catégories sur :", page)
     r = requests.get(page)
     soup = BeautifulSoup(r.content, 'html.parser')
     cat = soup.find('ul', class_='nav nav-list')
@@ -163,16 +161,38 @@ def scrap_main(page):
             href = a.get('href')
             caturls = urljoin(page, href)
             category_urls.append(caturls)
-    print("Finding all category urls on the homepage : success")
+
+    for link in category_urls:
+        scrap_category(link)
+    print("Terminé")
     return category_urls
 
-# main code
-page = "https://books.toscrape.com/"
-caturl = scrap_main(page)
-for link in caturl:
-    scrap_category(link)
 
-#url ="https://books.toscrape.com/catalogue/its-only-the-himalayas_981/index.html"
-#get_single_product_infos(url)
+def image_download(picture_url):
+    print("Téléchargement de l'image :", picture_url)
+    r = requests.get(picture_url)
+    soup = BeautifulSoup(r.content, 'html.parser')
+
+    image_class = soup.find('div', class_='item active')
+    image_src = image_class.find('img')['src']
+    image_url = urljoin(picture_url, image_src)
+    image_name = image_class.find('img')['alt'].replace(' ', '-').replace('(', '').replace('#', '').replace(')', '')
+    with open(image_name + '.jpg', 'wb') as f:
+        image = requests.get(image_url)
+        f.write(image.content)
+    print("Images téléchargées avec succès")
+    return image_name, image_url
+
+
+# main code
+add_csv_headers()
+page = "https://books.toscrape.com/"
+scrap_main(page)
+
+
+# url = "https://books.toscrape.com/catalogue/the-secret-garden_413/index.html"
+# print(get_single_product_infos(url))
 # caturl = "https://books.toscrape.com/catalogue/category/books/travel_2/index.html"
 # scrap_category(caturl)
+# image_picture_url = "https://books.toscrape.com/catalogue/the-secret-garden_413/index.html"
+# image_download(image_picture_url)
