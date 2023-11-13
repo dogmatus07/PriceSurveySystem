@@ -5,12 +5,22 @@ import csv
 import os
 import datetime
 
+
 def create_csv_folder(csv_folder):
     if not os.path.exists(csv_folder):
         os.makedirs(csv_folder)
         print("Dossier CSV créé avec succès")
     else:
-        print("File already exists")
+        print("Folder already exists, nothing created")
+
+
+def create_image_folder(im_folder):
+    if not os.path.exists(im_folder):
+        os.makedirs(im_folder)
+        print("Dossier image créé avec succès")
+    else:
+        print("Folder already exists, nothing created")
+
 
 def get_single_product_infos(book_url):
     print("Récupération des informations pour le livre : ", book_url)
@@ -35,6 +45,7 @@ def get_single_product_infos(book_url):
             'p') else ''
         image_class = soup.find('div', class_='item active')
         image_url = image_class.find('img')['src']
+        image_download(image_folder, image_url)  # download image of the book
         results = {
             "product_page_url": book_url,
             "upc": table.find_all('td')[0].get_text(),
@@ -68,7 +79,7 @@ def add_csv_headers(folder, file_name):
         "full_img_url",
     ]
 
-    file_path = os.path.join(folder, file_name) # get the path of the file to the csv folder
+    file_path = os.path.join(folder, file_name)  # get the path of the file to the csv folder
     with open(file_path, "w", newline="", encoding='utf-8-sig') as file:
         csv_file = csv.writer(file, delimiter=",")
         csv_file.writerow(headers)
@@ -176,7 +187,7 @@ def scrap_main(page):
             href = a.get('href')
             caturls = urljoin(page, href)
             category_name = a.get_text(strip=True)
-            category_urls.append((caturls, category_name)) # create a tuple to store url and its category
+            category_urls.append((caturls, category_name))  # create a tuple to store url and its category
 
     for link, name in category_urls:
         scrap_category(link, name)
@@ -184,7 +195,7 @@ def scrap_main(page):
     return category_urls
 
 
-def image_download(picture_url):
+def image_download(image_folder, picture_url):
     print("Téléchargement de l'image :", picture_url)
     r = requests.get(picture_url)
     soup = BeautifulSoup(r.content, 'html.parser')
@@ -193,7 +204,8 @@ def image_download(picture_url):
     image_src = image_class.find('img')['src']
     image_url = urljoin(picture_url, image_src)
     image_name = image_class.find('img')['alt'].replace(' ', '-').replace('(', '').replace('#', '').replace(')', '')
-    with open(image_name + '.jpg', 'wb') as f:
+    image_path = os.path.join(image_folder, image_name)
+    with open(image_path + '.jpg', 'wb') as f:
         image = requests.get(image_url)
         f.write(image.content)
     print("Images téléchargées avec succès")
@@ -203,9 +215,10 @@ def image_download(picture_url):
 # main code
 csv_folder = "csv_files"
 create_csv_folder(csv_folder)
+image_folder = "images"
+create_image_folder(image_folder)
 page = "https://books.toscrape.com/"
 scrap_main(page)
-
 
 # url = "https://books.toscrape.com/catalogue/the-secret-garden_413/index.html"
 # print(get_single_product_infos(url))
