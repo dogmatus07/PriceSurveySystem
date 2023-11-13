@@ -5,12 +5,22 @@ import csv
 import os
 import datetime
 
-def create_csv_folder(csv_folder):
-    if not os.path.exists(csv_folder):
-        os.makedirs(csv_folder)
+
+def create_csv_folder(folder_csv):
+    if not os.path.exists(folder_csv):
+        os.makedirs(folder_csv)
         print("Dossier CSV créé avec succès")
     else:
-        print("File already exists")
+        print("Folder already exists, nothing created")
+
+
+def create_image_folder(im_folder):
+    if not os.path.exists(im_folder):
+        os.makedirs(im_folder)
+        print("Dossier image créé avec succès")
+    else:
+        print("Folder already exists, nothing created")
+
 
 def get_single_product_infos(book_url):
     print("Récupération des informations pour le livre : ", book_url)
@@ -30,11 +40,14 @@ def get_single_product_infos(book_url):
         table = soup.find('table', class_="table table-striped")
         category_page = soup.find('ul', class_="breadcrumb")
         category_book = category_page.find_all('li')[2]
+        category = category_book.get_text(strip=True)
         id_description = soup.find('div', id="product_description")
         description = id_description.find_next('p').get_text() if id_description and id_description.find_next(
             'p') else ''
         image_class = soup.find('div', class_='item active')
         image_url = image_class.find('img')['src']
+        alt_text = image_class.find('img')['alt'].replace(' ', '-').replace('(', '').replace('#', '').replace(')', '').replace("'", "-")
+        image_name = f"{category}_{alt_text}"
         results = {
             "product_page_url": book_url,
             "upc": table.find_all('td')[0].get_text(),
@@ -43,9 +56,10 @@ def get_single_product_infos(book_url):
             "price_excluding_tax": table.find_all('td')[2].get_text(),
             "number_available": table.find_all('td')[5].get_text(),
             "product_description": description,
-            "category": category_book.get_text(strip=True),
+            "category": category,
             "review_rating": table.find_all('td')[6].get_text(),
-            "full_img_url": urljoin(book_url, image_url)
+            "full_img_url": urljoin(book_url, image_url),
+            "image_name": image_name
         }
         print("Terminé avec succès")
     else:
@@ -68,7 +82,7 @@ def add_csv_headers(folder, file_name):
         "full_img_url",
     ]
 
-    file_path = os.path.join(folder, file_name) # get the path of the file to the csv folder
+    file_path = os.path.join(folder, file_name)  # get the path of the file to the csv folder
     with open(file_path, "w", newline="", encoding='utf-8-sig') as file:
         csv_file = csv.writer(file, delimiter=",")
         csv_file.writerow(headers)
@@ -156,6 +170,7 @@ def scrap_category(cat_url, category_name):
 
     for product_url in product_urls:
         infos = get_single_product_infos(product_url)
+        image_download(image_folder, infos["full_img_url"], infos["image_name"])
         add_to_csv(csv_folder, infos, category_file_name)
         all_product_infos.append(infos)
 
@@ -163,9 +178,9 @@ def scrap_category(cat_url, category_name):
     return all_product_infos
 
 
-def scrap_main(page):
-    print("Récupération des URLs de catégories sur :", page)
-    r = requests.get(page)
+def scrap_main(homepage):
+    print("Récupération des URLs de catégories sur :", homepage)
+    r = requests.get(homepage)
     soup = BeautifulSoup(r.content, 'html.parser')
     cat = soup.find('ul', class_='nav nav-list')
     li_items = cat.find_all('li')[1:]  # avoid to get the Books url which is a page for all books
@@ -174,9 +189,9 @@ def scrap_main(page):
         atags = li.find_all('a')
         for a in atags:
             href = a.get('href')
-            caturls = urljoin(page, href)
+            caturls = urljoin(homepage, href)
             category_name = a.get_text(strip=True)
-            category_urls.append((caturls, category_name)) # create a tuple to store url and its category
+            category_urls.append((caturls, category_name))  # create a tuple to store url and its category
 
     for link, name in category_urls:
         scrap_category(link, name)
@@ -184,32 +199,20 @@ def scrap_main(page):
     return category_urls
 
 
-def image_download(picture_url):
+def image_download(im_folder, picture_url, image_name):
     print("Téléchargement de l'image :", picture_url)
-    r = requests.get(picture_url)
-    soup = BeautifulSoup(r.content, 'html.parser')
-
-    image_class = soup.find('div', class_='item active')
-    image_src = image_class.find('img')['src']
-    image_url = urljoin(picture_url, image_src)
-    image_name = image_class.find('img')['alt'].replace(' ', '-').replace('(', '').replace('#', '').replace(')', '')
-    with open(image_name + '.jpg', 'wb') as f:
-        image = requests.get(image_url)
+    image_path = os.path.join(im_folder, f"{image_name}.jpg")
+    with open(image_path, 'wb') as f:
+        image = requests.get(picture_url)
         f.write(image.content)
-    print("Images téléchargées avec succès")
-    return image_name, image_url
+    print("Image téléchargée avec succès")
+    return image_name, picture_url
 
 
 # main code
 csv_folder = "csv_files"
 create_csv_folder(csv_folder)
+image_folder = "images"
+create_image_folder(image_folder)
 page = "https://books.toscrape.com/"
 scrap_main(page)
-
-
-# url = "https://books.toscrape.com/catalogue/the-secret-garden_413/index.html"
-# print(get_single_product_infos(url))
-# caturl = "https://books.toscrape.com/catalogue/category/books/travel_2/index.html"
-# scrap_category(caturl)
-# image_picture_url = "https://books.toscrape.com/catalogue/the-secret-garden_413/index.html"
-# image_download(image_picture_url)
