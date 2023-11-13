@@ -3,7 +3,14 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import csv
 import os
+import datetime
 
+def create_csv_folder(csv_folder):
+    if not os.path.exists(csv_folder):
+        os.makedirs(csv_folder)
+        print("Dossier CSV créé avec succès")
+    else:
+        print("File already exists")
 
 def get_single_product_infos(book_url):
     print("Récupération des informations pour le livre : ", book_url)
@@ -46,7 +53,7 @@ def get_single_product_infos(book_url):
     return results
 
 
-def add_csv_headers():
+def add_csv_headers(folder, file_name):
     # adding the csv headers
     headers = [
         "product_page_url",
@@ -60,12 +67,14 @@ def add_csv_headers():
         "review_rating",
         "full_img_url",
     ]
-    with open("data.csv", "w", newline="", encoding='utf-8-sig') as file:
+
+    file_path = os.path.join(folder, file_name) # get the path of the file to the csv folder
+    with open(file_path, "w", newline="", encoding='utf-8-sig') as file:
         csv_file = csv.writer(file, delimiter=",")
         csv_file.writerow(headers)
 
 
-def add_to_csv(product_infos):
+def add_to_csv(folder, product_infos, file_name):
     # adding the data inside the list into the csv file
     print("Ajout des informations du livre dans le fichier CSV")
 
@@ -82,7 +91,9 @@ def add_to_csv(product_infos):
         product_infos["full_img_url"],
     ]
 
-    with open("data.csv", "a", newline="", encoding='utf-8-sig') as file:  # a means append here to add the datas
+    file_path = os.path.join(folder, file_name)
+
+    with open(file_path, "a", newline="", encoding='utf-8-sig') as file:  # a means append here to add the datas
         csv_writer = csv.writer(file, delimiter=",")
         csv_writer.writerow(data)
 
@@ -134,14 +145,18 @@ def next_status(cat_url):  # testing if there's a next page
     return cat_infos
 
 
-def scrap_category(cat_url):
+def scrap_category(cat_url, category_name):
     print("Récupération des URLs des livres de cette catégorie :", cat_url)
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S").replace("/", "_")
+    category_file_name = f"{category_name}_{timestamp}.csv"
+    add_csv_headers(csv_folder, category_file_name)
+
     product_urls = next_status(cat_url)
     all_product_infos = []
 
     for product_url in product_urls:
         infos = get_single_product_infos(product_url)
-        add_to_csv(infos)
+        add_to_csv(csv_folder, infos, category_file_name)
         all_product_infos.append(infos)
 
     print("Terminé")
@@ -160,10 +175,11 @@ def scrap_main(page):
         for a in atags:
             href = a.get('href')
             caturls = urljoin(page, href)
-            category_urls.append(caturls)
+            category_name = a.get_text(strip=True)
+            category_urls.append((caturls, category_name)) # create a tuple to store url and its category
 
-    for link in category_urls:
-        scrap_category(link)
+    for link, name in category_urls:
+        scrap_category(link, name)
     print("Terminé")
     return category_urls
 
@@ -185,7 +201,8 @@ def image_download(picture_url):
 
 
 # main code
-add_csv_headers()
+csv_folder = "csv_files"
+create_csv_folder(csv_folder)
 page = "https://books.toscrape.com/"
 scrap_main(page)
 
