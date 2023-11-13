@@ -35,8 +35,6 @@ def get_single_product_infos(book_url):
 
     if page_to_scrap:
         soup = BeautifulSoup(page_to_scrap.content, 'html.parser')
-
-        # gathering the data and put them inside variables
         table = soup.find('table', class_="table table-striped")
         category_page = soup.find('ul', class_="breadcrumb")
         category_book = category_page.find_all('li')[2]
@@ -46,7 +44,8 @@ def get_single_product_infos(book_url):
             'p') else ''
         image_class = soup.find('div', class_='item active')
         image_url = image_class.find('img')['src']
-        alt_text = image_class.find('img')['alt'].replace(' ', '-').replace('(', '').replace('#', '').replace(')', '').replace("'", "-")
+        get_alt_text = image_class.find('img')['alt']
+        alt_text = get_alt_text.replace(' ', '-').replace('(', '').replace('#', '').replace(')', '').replace("'", "-")
         image_name = f"{category}_{alt_text}"
         results = {
             "product_page_url": book_url,
