@@ -80,12 +80,15 @@ def clean_image_name(get_alt_text):
     alt_text.strip("-")
     return alt_text
 
+
 def find_review_rating(url):
     r = requests.get(url)
     soup = BeautifulSoup(r.content, 'html.parser')
     note = {"One": 1, "Two": 2, "Three": 3, "Four": 4, "Five": 5}
     review_star_section = soup.find('div', class_='col-sm-6 product_main')
     review_star_class = review_star_section.select('[class^="star-rating"]')
+    star_note = ""
+    book_review = ""
 
     for star in review_star_class:
         star_note = star.get('class')[-1]
@@ -93,6 +96,7 @@ def find_review_rating(url):
     if star_note in note:
         book_review = [note[star_note]][0]  # transform this into list, access the 1st element
     return book_review
+
 
 def add_csv_headers(folder, file_name):
     headers = [
