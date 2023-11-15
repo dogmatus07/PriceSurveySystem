@@ -4,6 +4,7 @@ from urllib.parse import urljoin
 import csv
 import os
 import datetime
+import time
 
 
 def create_csv_folder(folder_csv):
@@ -24,7 +25,6 @@ def create_image_folder(im_folder):
 
 def get_single_product_infos(book_url):
     print("Récupération des informations pour le livre : ", book_url)
-    # getting the html data and parsing it
     page_to_scrap = ""
     try:
         page_to_scrap = requests.get(book_url, timeout=20)
@@ -42,11 +42,14 @@ def get_single_product_infos(book_url):
         id_description = soup.find('div', id="product_description")
         description = id_description.find_next('p').get_text() if id_description and id_description.find_next(
             'p') else ''
+
+        #  Find the image and get the clean name
         image_class = soup.find('div', class_='item active')
         image_url = image_class.find('img')['src']
         get_alt_text = image_class.find('img')['alt']
-        alt_text = get_alt_text.replace(' ', '-').replace('(', '').replace('#', '').replace(')', '').replace("'", "-")
+        alt_text = clean_image_name(get_alt_text)
         image_name = f"{category}_{alt_text}"
+
         results = {
             "product_page_url": book_url,
             "upc": table.find_all('td')[0].get_text(),
@@ -56,7 +59,7 @@ def get_single_product_infos(book_url):
             "number_available": table.find_all('td')[5].get_text(),
             "product_description": description,
             "category": category,
-            "review_rating": table.find_all('td')[6].get_text(),
+            "review_rating": find_review_rating(book_url),
             "full_img_url": urljoin(book_url, image_url),
             "image_name": image_name
         }
@@ -66,8 +69,32 @@ def get_single_product_infos(book_url):
     return results
 
 
+def clean_image_name(get_alt_text):
+    special_chars = ["&", ":", ",", ";", "(", ")", "#", "’", "'", " ", "--", "---"]
+    alt_text = get_alt_text
+    for char in special_chars:
+        if char == " " and alt_text.endswith("-"):
+            alt_text = alt_text.strip("-") + char
+        else:
+            alt_text = alt_text.replace(char, "-")
+    alt_text.strip("-")
+    return alt_text
+
+def find_review_rating(url):
+    r = requests.get(url)
+    soup = BeautifulSoup(r.content, 'html.parser')
+    note = {"One": 1, "Two": 2, "Three": 3, "Four": 4, "Five": 5}
+    review_star_section = soup.find('div', class_='col-sm-6 product_main')
+    review_star_class = review_star_section.select('[class^="star-rating"]')
+
+    for star in review_star_class:
+        star_note = star.get('class')[-1]
+
+    if star_note in note:
+        book_review = [note[star_note]][0]  # transform this into list, access the 1st element
+    return book_review
+
 def add_csv_headers(folder, file_name):
-    # adding the csv headers
     headers = [
         "product_page_url",
         "upc",
@@ -81,14 +108,13 @@ def add_csv_headers(folder, file_name):
         "full_img_url",
     ]
 
-    file_path = os.path.join(folder, file_name)  # get the path of the file to the csv folder
+    file_path = os.path.join(folder, file_name)
     with open(file_path, "w", newline="", encoding='utf-8-sig') as file:
         csv_file = csv.writer(file, delimiter=",")
         csv_file.writerow(headers)
 
 
 def add_to_csv(folder, product_infos, file_name):
-    # adding the data inside the list into the csv file
     print("Ajout des informations du livre dans le fichier CSV")
 
     data = [
@@ -106,43 +132,33 @@ def add_to_csv(folder, product_infos, file_name):
 
     file_path = os.path.join(folder, file_name)
 
-    with open(file_path, "a", newline="", encoding='utf-8-sig') as file:  # a means append here to add the datas
+    with open(file_path, "a", newline="", encoding='utf-8-sig') as file:
         csv_writer = csv.writer(file, delimiter=",")
         csv_writer.writerow(data)
 
     print("Informations ajoutées avec succès")
-    '''
-    # display the content of the csv file
-    print("Aperçu du fichier CSV")
-    with open("data.csv", "r") as file:
-        csv_reader = csv.reader(file, delimiter=",")
-        for row in csv_reader:
-            print(row)
-    print("Fichier CSV mis à jour")
-    '''
 
 
-def get_category_infos(cat_url):  # get all urls from a category page
-    # getting the html data and parsing it
+def get_category_infos(cat_url):
     catpage = requests.get(cat_url)
     soup = BeautifulSoup(catpage.content, 'html.parser')
 
     # getting all the links inside a category
     product_section = soup.find_all("article", class_="product_pod")
-    product_urls = []  # put the results inside list
+    product_urls = []
     for product in product_section:
         h3 = product.find('h3')  # the url is inside a h3 tag
         if h3:
-            product_url = h3.find('a')['href']  # get the href
-            full_url = urljoin(cat_url, product_url)  # get the full url of the product
-            product_urls.append(full_url)  # adding the results inside the original list
+            product_url = h3.find('a')['href']
+            full_url = urljoin(cat_url, product_url)
+            product_urls.append(full_url)
     return product_urls
 
 
-def next_status(cat_url):  # testing if there's a next page
+def next_status(cat_url):
     print("Recherche d'une page Next")
     cat_infos = []
-    while True:  # iterate as long as these are true
+    while True:
         response = requests.get(cat_url)
         next_content = BeautifulSoup(response.content, 'html.parser')
         cat_infos.extend(
@@ -169,6 +185,7 @@ def scrap_category(cat_url, category_name):
 
     for product_url in product_urls:
         infos = get_single_product_infos(product_url)
+        print("image name before download", infos["image_name"])
         image_download(image_folder, infos["full_img_url"], infos["image_name"])
         add_to_csv(csv_folder, infos, category_file_name)
         all_product_infos.append(infos)
@@ -201,6 +218,7 @@ def scrap_main(homepage):
 def image_download(im_folder, picture_url, image_name):
     print("Téléchargement de l'image :", picture_url)
     image_path = os.path.join(im_folder, f"{image_name}.jpg")
+    time.sleep(1)
     with open(image_path, 'wb') as f:
         image = requests.get(picture_url)
         f.write(image.content)
