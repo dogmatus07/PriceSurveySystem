@@ -46,9 +46,17 @@ def get_single_product_infos(book_url):
         #  Find the image and get the clean name
         image_class = soup.find('div', class_='item active')
         image_url = image_class.find('img')['src']
-        get_alt_text = image_class.find('img')['alt']
-        alt_text = clean_image_name(get_alt_text)
-        image_name = f"{category}_{alt_text}"
+
+        #  get_alt_text = image_class.find('img')['alt']
+        #  alt_text = clean_image_name(get_alt_text)
+        picture_title = soup.find('div', class_="col-sm-6 product_main")
+        title_for_image = picture_title.find('h1').get_text()
+        image_name = f"{category}_{title_for_image}"
+
+        special_chars = ['"', "\\", "/", "*", "?", "&", ":", ",", ";", "(", ")", "#", "’", "'", " ", "--", "---", "."]
+        for char in special_chars:
+            pic_name = image_name.replace(char, "_")
+            image_name = pic_name.lower()
 
         results = {
             "product_page_url": book_url,
@@ -68,9 +76,9 @@ def get_single_product_infos(book_url):
         print("Requête annulée, car expirée (timeout)")
     return results
 
-
+'''
 def clean_image_name(get_alt_text):
-    special_chars = ["&", ":", ",", ";", "(", ")", "#", "’", "'", " ", "--", "---"]
+    special_chars = ["&", ":", ",", ";", "(", ")", "#", "’", "'", " ", "--", "---", "."]
     alt_text = get_alt_text
     for char in special_chars:
         if char == " " and alt_text.endswith("-"):
@@ -79,7 +87,7 @@ def clean_image_name(get_alt_text):
             alt_text = alt_text.replace(char, "-")
     alt_text.strip("-")
     return alt_text
-
+'''
 
 def find_review_rating(url):
     r = requests.get(url)
