@@ -222,7 +222,7 @@ def scrap_main(homepage):
 def image_download(im_folder, picture_url, image_name):
     print("Téléchargement de l'image :", picture_url)
     image_path = os.path.join(im_folder, f"{image_name}.jpg")
-    time.sleep(1)
+    time.sleep(0.5)
     with open(image_path, 'wb') as f:
         image = requests.get(picture_url)
         f.write(image.content)
