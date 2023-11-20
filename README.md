@@ -4,7 +4,7 @@
 
 ## Description
 
-Ce script est conçu pour récupérer des informations sur un site Web qui vend des livres. Il extrait des données telles que les détails du produit, les prix, la disponibilité et les images pour chaque livre dans diverses catégories.
+Ce script a été conçu pour récupérer des informations sur un site Web qui vend des livres. Il extrait des données telles que les détails du produit, les prix, la disponibilité et les images pour chaque livre dans diverses catégories.
 
 ## Exigences
 
