@@ -1,5 +1,12 @@
-/data.csv
+# ignore PyCharm config files
 .idea/workspace.xml
-csv_files/
-images/
 .idea/pricesurveysystem.iml
+
+# ignore csv files folder
+csv_files/
+
+#ignore image files folder
+images/
+
+# ignore virtual environment folder
+venv/
