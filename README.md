@@ -16,6 +16,18 @@ requêtes == 2.31.0
 tamis à soupe ==2,5  
 urllib3==2.0.7
 
+### Créez l'environement virtuel  
+Pour cela exécuter la commande suivante : 
+
+python -m venv venv
+
+### Activez l'environement virtuel
+
+#### Sous Windows
+.\venv\Scripts\activate
+
+### Installez les librairies requises
+
 Ce script a été testé sur un **environnement Windows** à l'aide de PyCharm.  
 
 Les prérequis sont fournis dans le fichier Requirements.txt.  
@@ -108,6 +120,17 @@ requests==2.31.0
 soupsieve==2.5  
 urllib3==2.0.7
 
+### Create the virtual environement  
+Execute the following command : 
+
+python -m venv venv
+
+### Activate the virtual environment
+
+#### For Windows
+.\venv\Scripts\activate
+
+### Install necessary librairies
 This script has been tested on a **Windows environment** using PyCharm.
 
 The prerequisites are provided in the requirements.txt file.
