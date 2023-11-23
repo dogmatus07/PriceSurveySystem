@@ -12,7 +12,7 @@ def create_csv_folder(folder_csv):
         os.makedirs(folder_csv)
         print("Dossier CSV créé avec succès")
     else:
-        print("Folder already exists, nothing created")
+        print("Le dossier existe déjà, rien n'a été créé")
 
 
 def create_image_folder(im_folder):
@@ -20,7 +20,7 @@ def create_image_folder(im_folder):
         os.makedirs(im_folder)
         print("Dossier image créé avec succès")
     else:
-        print("Folder already exists, nothing created")
+        print("Le dossier existe déjà, rien n'a été créé")
 
 
 def get_single_product_infos(book_url):
@@ -183,7 +183,7 @@ def scrap_category(cat_url, category_name):
 
     for product_url in product_urls:
         infos = get_single_product_infos(product_url)
-        print("image name before download", infos["image_name"])
+        print("Nom de l'image à télécharger : ", infos["image_name"])
         image_download(image_folder, infos["full_img_url"], infos["image_name"])
         add_to_csv(csv_folder, infos, category_file_name)
         all_product_infos.append(infos)
