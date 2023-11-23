@@ -40,8 +40,7 @@ def get_single_product_infos(book_url):
         category_book = category_page.find_all('li')[2]
         category = category_book.get_text(strip=True)
         id_description = soup.find('div', id="product_description")
-        description = id_description.find_next('p').get_text() if id_description and id_description.find_next(
-            'p') else ''
+        description = id_description.find_next('p').get_text() if id_description and id_description.find_next('p') else ''
 
         #  Find the image and get the clean name
         image_class = soup.find('div', class_='item active')
